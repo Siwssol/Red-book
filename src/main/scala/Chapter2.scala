@@ -37,22 +37,46 @@ object Chapter2 {
     isSortedLoop(1)
   }
 
+  /*
+    Adds two numbers together
+   */
   def addTwo (a: Int, b: Int) = a + b
 
   def addTwoCurried (a: Int)(b: Int) = a + b
 
+  /* partial application of functions:
+   Fixing a certain number of arguments in a function to return a function of a smaller arity.
+   E.g incrementone -> incrementing a value by 1 can be achieved partially as 1 is fixed.
+   val incrementone = partial(1, addTwo) <- we apply addTwo with a fixed argument so we only need to supply 1 argument to the function
+      (see above for implementation of addTwo)
+   This means that we can have incrementOne(6) which will execute addTwo(1)(6) = 7
+   */
   def partial1[A,B,C] (a: A, f: (A,B) => C) : B => C = {
     (b: B) => f(a, b)
   }
 
+  /*
+    Converting a function with n arguments into a sequence of functions, with each subsequent function having 1 less argument than the previous
+    Allows reuse of functions to different applications as it enables partial application
+    e.g the curried version of addTwo(a,b) = (b) => a + b
+      It returns a function that takes 1 less argument (b) which then returns the sum of a and b
+      You call the curried function as curriedAddTwo(a)(b)
+      You can store the intermediate functions as variables, which allows you to pass the functions as arguments to other functions
+   */
   def curry[A,B,C] (f: (A,B) => C) : A => (B => C) = {
     (a: A) => partial1(a, f)
   }
 
+  /*
+    The reverse transformation of currying
+   */
   def uncurry[A,B,C] (f: A => B => C): (A, B) => C = {
     (a: A, b: B) => f(a)(b)
   }
 
+  /*
+    The composition of two functions i.e f compose g
+   */
   def compose[A,B,C] (f: B => C, g: A => B) : A => C = {
     (a: A) => f(g(a))
   }
