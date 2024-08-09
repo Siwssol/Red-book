@@ -86,4 +86,5 @@ object Chapter2 {
     println(uncurry(addTwoCurried)(1,5))
     println(compose(fibonacci, factorial)(3))
   }
+
 }

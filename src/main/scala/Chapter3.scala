@@ -22,7 +22,8 @@ object List{
   // Sum and product are similar in terms of the structure, and so we can generalise it using a helper function
 
   /*
-    Sets a base case value and executes an expression over the values in the list
+    Sets a base case value and executes an expression over the values in the list. They combine items in a list into another item.
+    FoldRight carries out the expression from right to left
    */
   def foldRight[A,B] (as: List[A], z: B) (f: (A,B) => B) : B = {
     as match {
@@ -30,6 +31,46 @@ object List{
       case Cons(x, xs) => f(x, foldRight(xs, z)(f))
     }
   }
+
+  /*
+  like foldRight but from left to right
+
+  UPDATE -> NEED TO FIX, SEEMS TO NOT WORK FOR EVERY INPUT
+   */
+  @annotation.tailrec
+  def foldLeft[A,B] (as: List[A], z: B) (f: (B,A) => B) : B = {
+    as match {
+      case Nil => z
+      case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
+    }
+  }
+
+  /*
+  Modifies each value in a list into a different value, given by a function.
+   */
+  def map[A,B](as: List[A])(f: A => B) : List[B] = {
+    foldRight(as, Nil: List[B])((x,y) => Cons(f(x),y))
+  }
+
+  /*
+  Filters a list given a predicate
+
+  TO DO -> is there a better way?
+   */
+  def filter[A](as: List[A])(f: A => Boolean) : List[A] = {
+
+    def filterGo(as: List[A], filtls: List[A])(f: A => Boolean) : List[A] = {
+      as match {
+        case Nil => filtls
+        case Cons(x, xs) => if (f(x)) filterGo(xs, appendRight(filtls)(List(x)))(f) else filterGo(xs, filtls)(f)
+      }
+    }
+
+    filterGo(as, Nil)(f)
+
+  }
+
+
   /*
   List(1,2,3,4,5)
   Cons(1, Cons(2, Cons(3, Cons(4, Cons(5, Nil)))))
@@ -50,7 +91,52 @@ object List{
     foldRight(l, 1.0)(_ * _)
   }
 
-  
+  /*
+    Returns the length of the list
+    */
+  def length[A](l: List[A]) : Int = {
+    foldRight(l, 0)((_,y) => 1 + y)
+  }
+
+  /*
+   Calculates sum using foldLeft
+   */
+  def sumLeft(l: List[Int]) : Int = {
+    foldLeft(l, 0)((x,y) => x + y)
+  }
+
+  /*
+    Calculates product using foldLeft
+   */
+  def productLeft(l: List[Double]) : Double = {
+    foldLeft(l, 1.0)(_ * _)
+  }
+
+  /*
+    Calculates length using foldLeft
+   */
+  def lengthLeft[A](l: List[A]) : Int = {
+    foldLeft(l, 0)((y, _) => y + 1)
+  }
+
+  /*
+    Reverses the list
+   */
+  def reverse[A](l: List[A]) : List[A] = {
+    foldLeft(l, Nil: List[A])((x,xs) => Cons(xs,x))
+  }
+
+  /*
+  TO BE COMPLETE
+  def foldLeftViaFoldRight[A,B] (as: List[A], z: B) (f: (B,A) => B) : B = {
+    z
+  }
+
+  def foldRightViaFoldLeft[A,B] (as: List[A], z: B) (f: (A,B) => B) : B = {
+    z
+  }
+  */
+
   /*
     Appends two lists together into a single list
    */
@@ -60,6 +146,51 @@ object List{
       case Cons(h, t) => Cons(h, append(t, a2))
     }
   }
+
+  def appendRight[A](a1: List[A])(a2: List[A]) : List[A] = {
+    foldRight(a1, a2)(Cons(_,_))
+  }
+
+  /*
+    TO FIGURE OUT
+  def appendLeft[A](a1: List[A])(a2: List[A]) : List[A] = {
+    foldLeft(a2, a1)(Cons(_,_))
+  }
+  */
+
+  /*
+   Concatenates a List of lists of items (in the order they appear)
+   e.g concat List(List(1,2,3), List(4,5,6))
+       should return List(1,2,3,4,5,6)
+       it should work in linear time and for any number of lists.
+
+    TO FIGURE OUT -> use foldLeft since it be stack safe
+   */
+  def concatenate[A](ls: List[List[A]]) : List[A] = {
+    @annotation.tailrec
+    def concatenateGo(ls: List[List[A]], conls: List[A]) : List[A] = {
+      ls match {
+        case Nil => conls
+        case Cons(x, xs) => concatenateGo(xs, appendRight(conls)(x))
+      }
+    }
+    concatenateGo(ls, Nil)
+  }
+
+  /*
+  Adds 1 to each value in the list
+   */
+  def addOneToEachValue(ls: List[Int]) : List[Int] = {
+    foldRight(ls, Nil: List[Int])((x,y) => Cons(x+1, y))
+  }
+
+  /*
+  Converts the values in a list of doubles into strings
+   */
+  def eachDoubleToString(ls: List[Double]) : List[String] = {
+    foldRight(ls, Nil: List[String])((x,y) => Cons(x.toString, y))
+  }
+
 
   /*
     The * in A* means it accepts a variable number of arguments of type A
@@ -170,12 +301,15 @@ object List{
         It matches 3rd case Cons(x, Cons(y, Cons(3, Cons(4, _)))) with x = 1 and y = 2 so result = 3
    */
   def main(args: Array[String]) : Unit = {
-    println(dropWhile(List(1,2,3,4,5), (x: Int) => x < 4))
-    println(dropWhileImproved(List(1,2,3,4,5))(x => x < 4))
     println(sum2(List(1,2,3,4,5)))
-    println(product2(List(1,2,3,4,5)))
-    println(length(List(1,2,3,4,5)))
+    println(lengthLeft(List(1,2,3,1,1,1,1,1,1,1)))
+    println(appendRight(List(1,2,3))(List(4,5,6)))
+    println(addOneToEachValue(List(1,2,3)))
+    println(map(List(1,2,3))(x => x+1))
+    println(filter(List(1,2,3,4,5,6,7,8,9,10,11))(x => (x % 2) == 0))
+
   }
+
 }
 
 object Chapter3 {
