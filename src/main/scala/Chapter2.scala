@@ -31,7 +31,7 @@ object Chapter2 {
     @annotation.tailrec
     def isSortedLoop(n: Int) : Boolean = {
       if (n == as.length) true
-      else if (!ordered(as(n-1), as(n-2))) false
+      else if (!ordered(as(n-1), as(n))) false
       else isSortedLoop(n+1)
     }
     isSortedLoop(1)

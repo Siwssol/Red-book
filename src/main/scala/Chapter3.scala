@@ -2,6 +2,10 @@ sealed trait List[+A]
 case object Nil extends List[Nothing]
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
 
+sealed trait Tree[+A]
+case class Leaf[A](value: A) extends Tree[A]
+case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
+
 object List{
   /*
     Sum values of a list
@@ -53,6 +57,29 @@ object List{
   }
 
   /*
+  Like map but the function returns a list that's inserted in the final resulting list
+   */
+  def flatmap[A,B](as: List[A])(f: A => List[B]): List[B] = {
+    foldRight(as, Nil: List[B])((x,y) => appendRight(f(x))(y))
+  }
+
+  /*
+  Joins corresponding elements of two lists together based on a function
+   */
+  def zipWith[A,B] (l1: List[A], l2: List[A])(f: (A,A) => B) : List[B] = {
+
+    @annotation.tailrec
+    def zipWithGo(l1: List[A], l2: List[A], acc: List[B])(f: (A,A) => B) : List[B] = {
+      (l1, l2) match {
+        case (_, Nil) => acc
+        case (Nil, _) => acc
+        case (Cons(x,xs), Cons(y,ys)) => zipWithGo(xs, ys, appendRight(acc)(List(f(x,y))))(f)
+      }
+    }
+    zipWithGo(l1, l2, Nil)(f)
+  }
+
+  /*
   Filters a list given a predicate
 
   TO DO -> is there a better way?
@@ -68,6 +95,51 @@ object List{
 
     filterGo(as, Nil)(f)
 
+  }
+
+  /*
+  Filter but implemented using flatmap
+   */
+  def filterflatmap[A] (as: List[A])(f: A => Boolean) : List[A] = {
+    flatmap(as)(i => if (f(i)) List(i) else Nil)
+  }
+
+  /*
+  Determines if a sequence contains a particular subsequence
+   */
+
+  def hasSubsequence[A] (sup: List[A], sub: List[A]) : Boolean = {
+
+    /*
+    Similar structure to zip, however here we keep track of a boolean value of whether each corresponding element matches or not.
+    We can return false early if there is no match.
+
+    TO DO:
+      It looks like this whole function can be simplified.
+     */
+    def hasSubsequenceGo(sup: List[A], sub: List[A], hasSub: Boolean) : Boolean = {
+      (sup, sub) match {
+        case (_, Nil) => hasSub
+        case (Nil, _) => hasSub
+        case (Cons(x,xs), Cons(y,ys)) => if (x == y) hasSubsequenceGo(xs, ys, true) else false
+      }
+    }
+
+    /*
+    First we have to go through sequence to find match of the first element of subsequence
+     */
+    sup match {
+      case Nil => false
+      case Cons(x, xs) => sub match {
+        case Nil => false
+        /*
+        If we find a match we then we have found the start of the potential subsequence
+        We can then check each corresponding value of the sequences.
+        If not we just move on to the next value of the sequence
+         */
+        case Cons(y, ys) => if (x==y) hasSubsequenceGo(xs, ys, true) else hasSubsequence(xs, sub)
+      }
+    }
   }
 
 
@@ -191,6 +263,20 @@ object List{
     foldRight(ls, Nil: List[String])((x,y) => Cons(x.toString, y))
   }
 
+  def addLists(l1: List[Int], l2: List[Int]) : List[Int] = {
+
+    def addListsGo(l1: List[Int], l2: List[Int], acc: List[Int]) : List[Int] = {
+      (l1, l2) match {
+        case (_, Nil) => acc
+        case (Nil, _) => acc
+        case (Cons(x,xs),Cons(y,ys)) => addListsGo(xs, ys, appendRight(acc)(List(x+y)))
+      }
+    }
+
+    addListsGo(l1, l2, Nil)
+
+  }
+
 
   /*
     The * in A* means it accepts a variable number of arguments of type A
@@ -301,13 +387,114 @@ object List{
         It matches 3rd case Cons(x, Cons(y, Cons(3, Cons(4, _)))) with x = 1 and y = 2 so result = 3
    */
   def main(args: Array[String]) : Unit = {
-    println(sum2(List(1,2,3,4,5)))
-    println(lengthLeft(List(1,2,3,1,1,1,1,1,1,1)))
-    println(appendRight(List(1,2,3))(List(4,5,6)))
-    println(addOneToEachValue(List(1,2,3)))
-    println(map(List(1,2,3))(x => x+1))
-    println(filter(List(1,2,3,4,5,6,7,8,9,10,11))(x => (x % 2) == 0))
+//    println(sum2(List(1,2,3,4,5)))
+//    println(lengthLeft(List(1,2,3,1,1,1,1,1,1,1)))
+//    println(appendRight(List(1,2,3))(List(4,5,6)))
+//    println(addOneToEachValue(List(1,2,3)))
+//    println(map(List(1,2,3))(x => x*x))
+//    println(flatmap(List(2,3,4))(x => List(x-1,x,x+1)))
+//    println(filterflatmap(List(1,2,3,4,5,6,7))(x => x < 5 && x >=2))
+//    println(addLists(List(1,2,3,7,8,9), List(4,5,6,15,6)))
+//    println(zipWith(List(1,2,3), List(4,5,6))((x,y) => x * y))
+//    println(hasSubsequence(List(1,2,3,4,5,6,7), List(2,3,4,5)))
+  }
+}
 
+object Tree {
+
+  /*
+  Like fold for the lists but it generalises the functions for the tree.
+  Similar to the fold in lists we have an empty case (represented by z)
+  Here we need two functions,
+    one to decide what to do with a leaf case, that will be an arity 1 function as a Leaf only holds 1 value, the value itself
+    one to decide what to do with a branch case, that will be an arity 2 function as a branch holds 2 values, the left and right tree.
+   */
+  def fold[A,B](tr: Tree[A])(f : A => B)(g: (B,B) => B) : B = {
+    println(tr)
+    tr match {
+      case Leaf(x) => println("f(x) is = " + f(x))
+        f(x)
+      case Branch(left, right) =>
+        val leftRes = fold(left)(f)(g)
+        val rightRes = fold(right)(f)(g)
+        println(leftRes, rightRes)
+        g(leftRes, rightRes)
+    }
+  }
+
+  def map[A,B](tr: Tree[A])(f: A => B) : Tree[B] = {
+
+    tr match {
+      case null => null
+      case Leaf(x) => Leaf(f(x))
+      case Branch(left, right) => Branch(map(left)(f), map(right)(f))
+    }
+
+  }
+
+  /*
+  Returns size of the tree i.e sum of the nodes (leaves and branches)
+   */
+  def size[A](tr: Tree[A]) : Int = {
+
+    def sizeGo(tr: Tree[A], acc: Int) : Int = {
+      tr match {
+        // Nothing has size 0
+        case null => acc
+        // When you get to a leaf you add 1 as a leaf has size 1
+        case Leaf(_) => acc + 1
+        // When you get to a branch you recursively call on the left and right branch. You also increment by 1 as a branch has size 1
+        case Branch(left, right) => sizeGo(left, acc) + sizeGo(right, acc) + 1
+      }
+    }
+    sizeGo(tr, 0)
+  }
+
+  def maximum(tr: Tree[Int]) : Int = {
+
+    def maximumGo(tr: Tree[Int], maxVal: Int) : Int = {
+      tr match {
+        case null => maxVal
+        case Leaf(x) => x.max(maxVal)
+        case Branch(left, right) => maximumGo(left, maxVal).max(maximumGo(right, maxVal))
+      }
+    }
+
+    maximumGo(tr, Int.MinValue)
+  }
+  def depthGo[A](tr: Tree[A], maxDepth: Int) : Int = {
+    tr match {
+      case Leaf(_) => maxDepth
+      case Branch(left, right) => depthGo(left, maxDepth + 1).max(depthGo(right, maxDepth + 1))
+    }
+  }
+
+  def depth[A](tr: Tree[A], l: Leaf[A]) : Int = {
+
+    depthGo(tr, 0)
+  }
+
+  def size2[A](tr: Tree[A]) : Int = {
+    fold(tr)(_ => 1)((l,r) => l + r + 1)
+  }
+
+  def maximum2(tr: Tree[Int]) : Int = {
+    fold(tr)(x => x.max(Int.MinValue))((l,r) => l.max(r))
+  }
+
+
+  def depth2[A](tr: Tree[A]) : Int = {
+    fold(tr)(_ => 0)((l,r) => (l+1).max(r+1))
+  }
+
+  def map2[A,B](tr: Tree[A])(f: A => B) : Tree[B] = {
+    def xxx(l:Tree[B], r:Tree[B]): Tree[B] = Branch(l,r)
+    def yyy(x: A): Tree[B] = Leaf(f(x))
+    fold(tr)(yyy)(xxx)
+  }
+
+  def main(args: Array[String]) : Unit = {
+    println(depth2(Branch(Branch(Leaf("a"), Leaf("b")), Branch(Leaf("c"), Leaf("d")))))
   }
 
 }
