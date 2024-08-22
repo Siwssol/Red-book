@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Scala Red Book.iml" filepath="$PROJECT_DIR$/.idea/modules/Scala Red Book.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Scala Red Book.Scala Red Book-build.iml" filepath="$PROJECT_DIR$/.idea/modules/Scala Red Book.Scala Red Book-build.iml" />
     </modules>
   </component>
 </project>

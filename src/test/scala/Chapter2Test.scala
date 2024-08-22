@@ -1,4 +1,4 @@
-import Chapter2.{curry, factorial, fibonacci, isSorted, uncurry, compose}
+import Chapter2.{curry, factorial, fibonacci, isSorted, uncurry, compose, genList}
 import List.reverse
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
@@ -6,16 +6,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 
 class Chapter2Test extends AnyFlatSpec with Matchers {
-
-  def genList(n: Int, start: Int, step: Int)(f: Int => Int): List[Int] = {
-
-    def genListGo(cur: Int, ls: List[Int])(f: Int => Int) : List[Int] = {
-      if (cur > n)
-        ls
-      else genListGo(cur + step, Cons(f(cur), ls))(f)
-    }
-    reverse(genListGo(start, Nil)(f))
-  }
 
   "fibonacci function" must "output correct values" in {
     fibonacci(5) mustBe 3
@@ -101,7 +91,7 @@ class Chapter2Test extends AnyFlatSpec with Matchers {
     squaredHello(2) mustBe "hello hello hello hello "
   }
 
-  
+
 
 
 

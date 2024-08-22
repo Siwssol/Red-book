@@ -50,6 +50,26 @@ object List{
   }
 
   /*
+   Concatenates a List of lists of items (in the order they appear)
+   e.g concat List(List(1,2,3), List(4,5,6))
+       should return List(1,2,3,4,5,6)
+       it should work in linear time and for any number of lists.
+
+    TO FIGURE OUT -> use foldLeft since it be stack safe
+   */
+  def concatenate[A](ls: List[List[A]]) : List[A] = {
+    @annotation.tailrec
+    def concatenateGo(ls: List[List[A]], conls: List[A]) : List[A] = {
+      ls match {
+        case Nil => conls
+        case Cons(x, xs) => concatenateGo(xs, append(conls,x))
+      }
+    }
+
+    concatenateGo(ls, Nil)
+  }
+
+  /*
   Modifies each value in a list into a different value, given by a function.
    */
   def map[A,B](as: List[A])(f: A => B) : List[B] = {
@@ -60,7 +80,15 @@ object List{
   Like map but the function returns a list that's inserted in the final resulting list
    */
   def flatmap[A,B](as: List[A])(f: A => List[B]): List[B] = {
-    foldRight(as, Nil: List[B])((x,y) => appendRight(f(x))(y))
+
+    def flatmapGo(ls: List[A], fls: List[B])(f: A => List[B]) : List[B] = {
+      ls match {
+        case Nil => fls
+        case Cons(x, xs) => flatmapGo(xs, append(fls, f(x)))(f)
+      }
+    }
+
+    flatmapGo(as, Nil)(f)
   }
 
   /*
@@ -104,6 +132,17 @@ object List{
     flatmap(as)(i => if (f(i)) List(i) else Nil)
   }
 
+
+  /*
+  Check if list is empty or not
+   */
+  def isEmpty[A](ls: List[A]) : Boolean = {
+    ls match {
+      case Nil => true
+      case _ => false
+    }
+  }
+
   /*
   Determines if a sequence contains a particular subsequence
    */
@@ -117,11 +156,11 @@ object List{
     TO DO:
       It looks like this whole function can be simplified.
      */
-    def hasSubsequenceGo(sup: List[A], sub: List[A], hasSub: Boolean) : Boolean = {
+    def hasSubsequenceGo(sup: List[A], sub: List[A]) : Boolean = {
       (sup, sub) match {
-        case (_, Nil) => hasSub
-        case (Nil, _) => hasSub
-        case (Cons(x,xs), Cons(y,ys)) => if (x == y) hasSubsequenceGo(xs, ys, true) else false
+        case (_, Nil) => true
+        case (Nil, _) => true
+        case (Cons(x,xs), Cons(y,ys)) => if (x == y) hasSubsequenceGo(xs, ys) else false
       }
     }
 
@@ -129,15 +168,15 @@ object List{
     First we have to go through sequence to find match of the first element of subsequence
      */
     sup match {
-      case Nil => false
+      case Nil => isEmpty(sub)
       case Cons(x, xs) => sub match {
-        case Nil => false
+        case Nil => true
         /*
         If we find a match we then we have found the start of the potential subsequence
         We can then check each corresponding value of the sequences.
         If not we just move on to the next value of the sequence
          */
-        case Cons(y, ys) => if (x==y) hasSubsequenceGo(xs, ys, true) else hasSubsequence(xs, sub)
+        case Cons(y, ys) => if (x==y) hasSubsequenceGo(xs, ys) else hasSubsequence(xs, sub)
       }
     }
   }
@@ -230,24 +269,6 @@ object List{
   }
   */
 
-  /*
-   Concatenates a List of lists of items (in the order they appear)
-   e.g concat List(List(1,2,3), List(4,5,6))
-       should return List(1,2,3,4,5,6)
-       it should work in linear time and for any number of lists.
-
-    TO FIGURE OUT -> use foldLeft since it be stack safe
-   */
-  def concatenate[A](ls: List[List[A]]) : List[A] = {
-    @annotation.tailrec
-    def concatenateGo(ls: List[List[A]], conls: List[A]) : List[A] = {
-      ls match {
-        case Nil => conls
-        case Cons(x, xs) => concatenateGo(xs, appendRight(conls)(x))
-      }
-    }
-    concatenateGo(ls, Nil)
-  }
 
   /*
   Adds 1 to each value in the list
@@ -269,7 +290,7 @@ object List{
       (l1, l2) match {
         case (_, Nil) => acc
         case (Nil, _) => acc
-        case (Cons(x,xs),Cons(y,ys)) => addListsGo(xs, ys, appendRight(acc)(List(x+y)))
+        case (Cons(x,xs),Cons(y,ys)) => addListsGo(xs, ys, append(acc,List(x+y)))
       }
     }
 
@@ -373,8 +394,7 @@ object List{
   Sets the first element of a list to a different element
    */
   def setHead[A] (newVal: A, ints: List[A]) : List[A] = {
-    if (newVal == null) ints
-    else ints match {
+    ints match {
       case Nil => Cons(newVal, Nil)
       case Cons(_, xs) => Cons(newVal, xs)
     }
@@ -396,7 +416,8 @@ object List{
 //    println(filterflatmap(List(1,2,3,4,5,6,7))(x => x < 5 && x >=2))
 //    println(addLists(List(1,2,3,7,8,9), List(4,5,6,15,6)))
 //    println(zipWith(List(1,2,3), List(4,5,6))((x,y) => x * y))
-//    println(hasSubsequence(List(1,2,3,4,5,6,7), List(2,3,4,5)))
+    println(hasSubsequence(List(1,2,3,4,5,6,7,8,9,10,11,12), List(2,3,4,5,6,7,8,9)))
+//    println(concatenate(List(List(4,5,2), List(1), List(1,2), List(2,2,2), List(9,8,7,6), List(1,3,4))))
   }
 }
 
@@ -410,14 +431,11 @@ object Tree {
     one to decide what to do with a branch case, that will be an arity 2 function as a branch holds 2 values, the left and right tree.
    */
   def fold[A,B](tr: Tree[A])(f : A => B)(g: (B,B) => B) : B = {
-    println(tr)
     tr match {
-      case Leaf(x) => println("f(x) is = " + f(x))
-        f(x)
+      case Leaf(x) => f(x)
       case Branch(left, right) =>
         val leftRes = fold(left)(f)(g)
         val rightRes = fold(right)(f)(g)
-        println(leftRes, rightRes)
         g(leftRes, rightRes)
     }
   }
@@ -469,7 +487,7 @@ object Tree {
     }
   }
 
-  def depth[A](tr: Tree[A], l: Leaf[A]) : Int = {
+  def depth[A](tr: Tree[A]) : Int = {
 
     depthGo(tr, 0)
   }
@@ -495,6 +513,7 @@ object Tree {
 
   def main(args: Array[String]) : Unit = {
     println(depth2(Branch(Branch(Leaf("a"), Leaf("b")), Branch(Leaf("c"), Leaf("d")))))
+
   }
 
 }

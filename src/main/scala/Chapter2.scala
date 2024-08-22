@@ -81,6 +81,17 @@ object Chapter2 {
     (a: A) => f(g(a))
   }
 
+
+  def genList(n: Int, start: Int, step: Int)(f: Int => Int): List[Int] = {
+
+    def genListGo(cur: Int, ls: List[Int])(f: Int => Int) : List[Int] = {
+      if (cur > n)
+        ls
+      else genListGo(cur + step, Cons(f(cur), ls))(f)
+    }
+    List.reverse(genListGo(start, Nil)(f))
+  }
+
   def main(args: Array[String]) : Unit = {
     println(curry(addTwo)(1)(5))
     println(uncurry(addTwoCurried)(1,5))
