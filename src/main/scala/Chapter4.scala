@@ -183,7 +183,7 @@ object Chapter4 {
     println(variance(Seq(3,4,5,2)))
     println(parseInsuranceRateQuote("0", "7"))
     println(sequence(List(Some(1), Some(2), Some(5), Some(7), Some(9))))
-    println(sequenceTraverse(List(Some(1), Some(2), Some(5), Some(7), Some(9))))
+    println(sequenceTraverse(List(Some(1), Some(2), None, Some(7), Some(9))))
 
   }
 

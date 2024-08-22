@@ -7,7 +7,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class Chapter2Test extends AnyFlatSpec with Matchers {
 
-  "fibonacci function" must "output correct values" in {
+  "Fibonacci function" must "output correct values" in {
     fibonacci(5) mustBe 3
     fibonacci(8) mustBe 13
     fibonacci(11) mustBe 55

@@ -170,7 +170,7 @@ class Chapter3Test extends AnyFlatSpec with Matchers {
     Tree.maximum(Branch(Branch(Leaf(10000), null), Branch(Leaf(12376), Leaf(4623)))) mustBe 12376
   }
 
-  "tree depth" must "work correctly" in {
+  "Tree depth" must "work correctly" in {
     Tree.depth(Branch(Branch(Leaf("a"), Leaf("b")), Branch(Leaf("c"), Leaf("d")))) mustBe 2
     Tree.depth(Branch(Branch(Branch(Branch(Leaf("a"), Leaf("b")), Leaf("b")), Leaf("b")), Branch(Leaf("c"), Leaf("d")))) mustBe 4
     Tree.depth(Branch(Leaf("a"), Leaf("b")))

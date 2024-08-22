@@ -3,7 +3,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class Chapter4Test extends AnyFlatSpec with Matchers {
 
-  "Option map" must "work" in {
+  "Option map" must "work correctly" in {
     val x: Option[Int] = Some(3)
     val y: Option[String] = None
     x.map(x => x * 8) mustBe Some(24)
