@@ -1,6 +1,10 @@
 
-
-trait Option[+A] {
+/*
+ Options are useful with error handling as it can tell you whether you have an error (in that case you can just return None). Then you can use that None to stop other functions from executing.
+ However, because they only return None, they do not tell you what the error actually was, which typically is something that would be useful to us. They only tell you if an error occurred.
+ To encapsulate a reason for the error we can use the Either data type.
+ */
+sealed trait Option[+A] {
   def map[B](f: A => B): Option[B] = {
     this match {
       case Some(get) => Some(f(get))
@@ -40,6 +44,44 @@ trait Option[+A] {
 case class Some[+A](get: A) extends Option[A]
 case object None extends Option[Nothing]
 
+/*
+Eithers allow us to encapsulate the kind of error that occured. It takes two cases, like Option, but both of those cases carry a value. It represents values that can be one of two things,
+a disjoint union of the two types.
+The two cases are Left and Right:
+  Left -> Usually represents the failure/error case
+  Right -> Typically represents the success case (as "right" means correct)
+
+ */
+sealed trait Either[+E, +A] {
+  def map[B](f: A => B): Either[E, B] = {
+    this match {
+      case Right(value) =>
+        try Right(f(value))
+        catch { case e: E => Left(e) }
+      case Left(e) => Left(e)
+    }
+  }
+
+  def flatmap[EE >: E, B](f: A => Either[EE, B]): Either[EE, B] = {
+    this match {
+      case Right(value) =>
+        try f(value)
+        catch { case e: EE => Left(e) }
+      case Left(e) => Left(e)
+    }
+  }
+
+  def orElse[EE >: E, B >: A](b: => Either[EE, B]): Either[EE, B] = {
+    this match {
+      case Right(_) => this
+      case Left(_) => b
+    }
+  }
+
+}
+case class Left[+E](value: E) extends Either[E, Nothing]
+case class Right[+A](value: A) extends Either[Nothing, A]
+
 case class Employee(name: String, department: String, manager: Option[String] = None) {
 
 }
@@ -71,6 +113,24 @@ object Chapter4 {
   def mean(ls: Seq[Double]): Option[Double] = {
     if (ls.isEmpty) None
     else Some(ls.sum / ls.length)
+  }
+
+  /*
+  Here now instead of just returning None, we can return a String in case of failure
+   */
+  def meanEither(ls: Seq[Double]): Either[String, Double] = {
+    if (ls.isEmpty)
+      Left("mean of empty List!")
+    else
+      Right(ls.sum/ls.length)
+  }
+
+  /*
+  We can return an exception on the left side which encapsulates the info about the error as a value
+   */
+  def safeDiv(x: Int, y: Int): Either[Exception, Int] = {
+    try Right(x / y)
+    catch { case e: Exception => Left(e) }
   }
 
   def variance(xs: Seq[Double]): Option[Double] = {
@@ -165,6 +225,37 @@ object Chapter4 {
     catch {case e: Exception => None}
   }
 
+  def TryEither[A](a: => A): Either[Exception, A] = {
+    try Right(a)
+    catch { case e: Exception => Left(e) }
+  }
+
+  def sequenceEither[E, A](es: List[Either[E,A]]): Either[E, List[A]] = {
+    es match {
+      case Nil => Right(Nil)
+      case Cons(x, xs) => x match {
+        case Left(value) => Left(value)
+        case Right(getHead) => sequenceEither(xs) match {
+          case Left(value) => Left(value)
+          case Right(getTail) => Right(Cons(getHead, getTail))
+        }
+      }
+    }
+  }
+
+  def traverseEither[E, A, B](as: List[A])(f: A => Either[E, B]): Either[E, List[B]] = {
+    as match {
+      case Nil => Right(Nil)
+      case Cons(x, xs) => f(x) match {
+        case Left(e) => Left(e)
+        case Right(getHead) => traverseEither(xs)(f) match {
+          case Left(e) => Left(e)
+          case Right(getTail) => Right(Cons(getHead, getTail))
+        }
+      }
+    }
+  }
+
   def insuranceRateQuote(value: Int, value1: Int): Double = {
     (value * 3) + (value1 * 7) - 5
   }
@@ -178,13 +269,8 @@ object Chapter4 {
   }
 
   def main(args: Array[String]) : Unit = {
-    val x: Option[Int] = Some(3)
-    val abs7 = lift(math.abs)
-    println(variance(Seq(3,4,5,2)))
-    println(parseInsuranceRateQuote("0", "7"))
-    println(sequence(List(Some(1), Some(2), Some(5), Some(7), Some(9))))
-    println(sequenceTraverse(List(Some(1), Some(2), None, Some(7), Some(9))))
-
+    val x: List[Int] = List(1,4,5,1,2,3,4,5)
+    println(traverseEither(x)(a => if (a%2 == 0) Left(a) else Right(a)))
   }
 
 }
