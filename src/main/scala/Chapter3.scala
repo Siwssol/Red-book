@@ -1,3 +1,11 @@
+/*
+Functional programs don't update variables or modify data structures which raises questions -> what kind of data structures can we represent in functional programming and how can we do that.
+A functional data structure is operated on using only pure functions -> which then means by definition all functional data structures are immutable.
+  -> recall a pure function is a function that does not change data in place or cause any side effects.
+
+traits represent abstract interfaces that may optionally contain implementations of some methods.
+ */
+
 sealed trait List[+A]
 case object Nil extends List[Nothing]
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
@@ -6,6 +14,10 @@ sealed trait Tree[+A]
 case class Leaf[A](value: A) extends Tree[A]
 case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
 
+
+/*
+  An object with the same name as the data type is known as a companion object. We can put convenience functions for creating or working with values of the data type.
+ */
 object List{
   /*
     Sum values of a list
@@ -26,7 +38,7 @@ object List{
   // Sum and product are similar in terms of the structure, and so we can generalise it using a helper function
 
   /*
-    Sets a base case value and executes an expression over the values in the list. They combine items in a list into another item.
+    Sets a base case value and executes an expression over the values in the list. They combine items in a list using a function into another item.
     FoldRight carries out the expression from right to left
    */
   def foldRight[A,B] (as: List[A], z: B) (f: (A,B) => B) : B = {
@@ -308,7 +320,8 @@ object List{
   }
 
   /*
-    Return the list excluding the last element of that list i.e removes the last element of the list
+    Return the list excluding the last element of that list i.e removes the last element of the list. This can't be done in constant time (and use data sharing) due to the nature of a list. It is essentially a singly linked list and since we only have access to the head element,
+    we have to copy values until we reach the tail.
    */
   def init[A](l: List[A]) : List[A] = {
     l match {
@@ -332,6 +345,10 @@ object List{
   }
 
   /*
+   Since the structures are immutable, how do we perform operations that would add/remove items from a list?
+    -> This is done by returning a new list, however we can still reuse existing data (to not use up so much memory). For example if we want to remove the first element of a list, we don't need to create another copy of the list.
+       We can just reuse the existing list but just reference the tail of it, as a list is made up of a head(a value) and a tail(another list) and the tail is the list without the first element.
+    This reuse of data is known as data sharing.
    Removes first element of a list
    */
   def tail[A](ints: List[A]) : List[A] = {
