@@ -1,3 +1,5 @@
+package Part1
+
 /*
 Functional programs don't update variables or modify data structures which raises questions -> what kind of data structures can we represent in functional programming and how can we do that.
 A functional data structure is operated on using only pure functions -> which then means by definition all functional data structures are immutable.
@@ -6,11 +8,11 @@ A functional data structure is operated on using only pure functions -> which th
 traits represent abstract interfaces that may optionally contain implementations of some methods.
  */
 
-sealed trait List[+A]
+trait List[+A]
 case object Nil extends List[Nothing]
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
 
-sealed trait Tree[+A]
+trait Tree[+A]
 case class Leaf[A](value: A) extends Tree[A]
 case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
 
@@ -49,9 +51,7 @@ object List{
   }
 
   /*
-  like foldRight but from left to right
-
-  UPDATE -> NEED TO FIX, SEEMS TO NOT WORK FOR EVERY INPUT
+  like foldRight but from left to right. As fold right is not tail-recursive and will result in a StackOverflow error for large lists.
    */
   @annotation.tailrec
   def foldLeft[A,B] (as: List[A], z: B) (f: (B,A) => B) : B = {
@@ -66,8 +66,6 @@ object List{
    e.g concat List(List(1,2,3), List(4,5,6))
        should return List(1,2,3,4,5,6)
        it should work in linear time and for any number of lists.
-
-    TO FIGURE OUT -> use foldLeft since it be stack safe
    */
   def concatenate[A](ls: List[List[A]]) : List[A] = {
     @annotation.tailrec
@@ -79,6 +77,13 @@ object List{
     }
 
     concatenateGo(ls, Nil)
+  }
+
+  /*
+  Concatenates a list of lists with foldLeft
+   */
+  def concatenateleft[A](ls: List[List[A]]) : List[A] = {
+    foldLeft(ls, Nil: List[A])((acc, curr) => append(acc,curr))
   }
 
   /*
@@ -249,16 +254,17 @@ object List{
     foldLeft(l, Nil: List[A])((x,xs) => Cons(xs,x))
   }
 
-  /*
-  TO BE COMPLETE
+
   def foldLeftViaFoldRight[A,B] (as: List[A], z: B) (f: (B,A) => B) : B = {
-    z
+    foldRight(reverse(as), z)((acc, curr) => f(curr, acc))
   }
 
+  /*
+  Maybe there's another way?
+   */
   def foldRightViaFoldLeft[A,B] (as: List[A], z: B) (f: (A,B) => B) : B = {
-    z
+    foldLeft(reverse(as), z)((curr, acc) => f(acc, curr))
   }
-  */
 
   /*
     Appends two lists together into a single list
@@ -274,13 +280,9 @@ object List{
     foldRight(a1, a2)(Cons(_,_))
   }
 
-  /*
-    TO FIGURE OUT
   def appendLeft[A](a1: List[A])(a2: List[A]) : List[A] = {
-    foldLeft(a2, a1)(Cons(_,_))
+    foldLeft(reverse(a1), a2)((acc, curr) => Cons(curr, acc))
   }
-  */
-
 
   /*
   Adds 1 to each value in the list

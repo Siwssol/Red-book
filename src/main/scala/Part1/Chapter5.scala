@@ -1,4 +1,6 @@
-import Stream.{consStream, unfold}
+package Part1
+
+import Part1.Stream.{consStream, unfold}
 
 /*
 The issue with the map and filter functions, or rather the List data structure is that for each application of the functions, we have to go through a list.
@@ -51,6 +53,10 @@ object Chapter5 {
     /*
     If you run the function but add an intermediate print statement for each time i is evaluated, you can see that i is evaluated twice
      */
+    println(maybeTwice(true, {println("hi"); 1 + 41}))
+    /*
+    But here it id only evaluated once.
+     */
     println(maybeTwice2(true, {println("hi"); 1 + 41}))
   }
 }
@@ -66,14 +72,14 @@ sealed trait Stream[+A] {
   /*
   We have to force h explicitly via h()
    */
-  def headOption: Option[A] = this match {
-    case Empty => None
-    case ConsStream(h, t) => Some(h())
+  def headOption: Part1.Option[A] = this match {
+    case Empty => Part1.None
+    case ConsStream(h, t) => Part1.Some(h())
   }
 
-  def toList: List[A] = {
+  def toList: Part1.List[A] = {
     this match {
-      case Empty => Nil
+      case Empty => Part1.Nil
       case ConsStream(h, t) => Cons(h(), t().toList)
     }
   }
@@ -88,7 +94,7 @@ sealed trait Stream[+A] {
   }
 
   def takeFold(n: Int): Stream[A] = {
-    unfold((this, n))({case (ConsStream(a,b), n) => if (n > 0) Some(a(), (b(), n-1)) else None })
+    unfold((this, n))({case (ConsStream(a,b), n) => if (n > 0) Part1.Some(a(), (b(), n-1)) else Part1.None })
   }
 
   def drop(n: Int): Stream[A] = {
@@ -168,11 +174,11 @@ sealed trait Stream[+A] {
   }
 
   def takeWhileFold(p: A => Boolean): Stream[A] = {
-    unfold(this)({case ConsStream(a,b) => if (p(a())) Some(a(), b()) else None })
+    unfold(this)({case ConsStream(a,b) => if (p(a())) Part1.Some(a(), b()) else Part1.None })
   }
 
-  def headOptionRight: Option[A] =
-    foldRight(None: Option[A])((a,b) => Some(a))
+  def headOptionRight: Part1.Option[A] =
+    foldRight(Part1.None: Part1.Option[A])((a, b) => Part1.Some(a))
 
   def map[B](f: A => B): Stream[B] =
     foldRight(Empty: Stream[B])((a,b) => ConsStream(() => f(a), () => b))
@@ -189,32 +195,32 @@ sealed trait Stream[+A] {
     foldRight(Empty: Stream[B])((a,b) => f(a).append(b))
 
   def mapFold[B](f: A => B): Stream[B] =
-    unfold(this: Stream[A]){case ConsStream(a,b) => Some(f(a()), b())}
+    unfold(this: Stream[A]){case ConsStream(a,b) => Part1.Some(f(a()), b())}
 
   def zipWith[A1 >: A, B](st: Stream[A1])(f: (A1,A1) => B) : Stream[B] =
     unfold((this: Stream[A1], st)){
-      case (Empty, Empty) => None
+      case (Empty, Empty) => Part1.None
       case (ConsStream(a, b), ConsStream(aa, bb)) =>
-        Some(f(a(), aa()), (b(), bb()))}
+        Part1.Some(f(a(), aa()), (b(), bb()))}
 
   /*
   Like zipWith but it's extended to handle unmatching sized Streams. It continues the traversal so long as either Stream has more elements.
   It generates a tuple of each corresponding element. If either stream has finished traversal but it can keep traversing, the values are filled with None.
    */
-  def zipAll[B](s2: Stream[B]): Stream[(Option[A], Option[B])] =
+  def zipAll[B](s2: Stream[B]): Stream[(Part1.Option[A], Part1.Option[B])] =
     unfold((this: Stream[A], s2)) {
-      case (Empty, Empty) => None
-      case (Empty, ConsStream(a,b)) => Some((None, Some(a())), (Empty, b()))
-      case (ConsStream(a,b), Empty) => Some((Some(a()), None), (b(), Empty))
+      case (Empty, Empty) => Part1.None
+      case (Empty, ConsStream(a,b)) => Part1.Some((Part1.None, Part1.Some(a())), (Empty, b()))
+      case (ConsStream(a,b), Empty) => Part1.Some((Part1.Some(a()), Part1.None), (b(), Empty))
       case (ConsStream(a, b), ConsStream(aa, bb)) =>
-        Some((Some(a()), Some(aa())),(b(), bb()))
+        Part1.Some((Part1.Some(a()), Part1.Some(aa())),(b(), bb()))
     }
 
 
   /*
   Even though filter transforms the whole stream, it does it lazily so it will terminate as soon as a match is found
    */
-  def find(p: A => Boolean): Option[A] =
+  def find(p: A => Boolean): Part1.Option[A] =
     filter(p).headOption
 
   /*
@@ -222,7 +228,7 @@ sealed trait Stream[+A] {
   e.g Stream(1,2,3) startsWith Stream(1,2) would be true
    */
   def startsWith[A1 >: A](s: Stream[A1]): Boolean =
-    this.zipAll(s).takeWhile(x => x._2.getOrElse(None) != None).forAll(x => x._1 == x._2)
+    this.zipAll(s).takeWhile(x => x._2.getOrElse(Part1.None) != Part1.None).forAll(x => x._1 == x._2)
 
   /*
   Generates a Stream of suffixes of the input stream
@@ -230,11 +236,11 @@ sealed trait Stream[+A] {
    */
   def tails: Stream[Stream[A]] =
     unfold(this){
-      case Empty => None
+      case Empty => Part1.None
       case x => x match {
-        case ConsStream(a,b) => Some(unfold(x){
-          case Empty => None
-          case ConsStream(aa, bb) => Some(aa(), bb())
+        case ConsStream(a,b) => Part1.Some(unfold(x){
+          case Empty => Part1.None
+          case ConsStream(aa, bb) => Part1.Some(aa(), bb())
         },b())
       }
     }
@@ -291,7 +297,7 @@ object Stream {
     fibsGo(0,1)
   }
 
-  def unfold[A,S](z: S)(f: S => Option[(A,S)]): Stream[A] = {
+  def unfold[A,S](z: S)(f: S => Part1.Option[(A,S)]): Stream[A] = {
     f(z) match {
       case Some((a,s)) => consStream(a, unfold(s)(f))
       case _ => Empty
@@ -401,7 +407,7 @@ object Stream {
 //     */
 //    println(from(1).hasSubsequence(Stream(1,2,3)))
 
-    println(Stream(1,2,3).scanRight(0)(_ + _).toList)
+    println(Stream(1,4,2,5,3,6,3,4,2).tails.map(x => x.toList).toList)
 
   }
 }

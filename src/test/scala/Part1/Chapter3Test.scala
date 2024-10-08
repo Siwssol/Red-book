@@ -1,5 +1,7 @@
+package Part1
+
 import Chapter2.{curry, factorial, fibonacci, genList}
-import List.{addLists, addOneToEachValue, append, concatenate, drop, dropWhile, dropWhileImproved, eachDoubleToString, filter, filterflatmap, flatmap, foldRight, hasSubsequence, init, map, reverse, setHead, tail, zipWith}
+import Part1.List._
 import org.mockito.MockitoSugar.{mock, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers
@@ -53,11 +55,31 @@ class Chapter3Test extends AnyFlatSpec with Matchers {
   }
 
   "fold right" must "work correctly" in {
-    foldRight(List(1,2,3,4,5), 0)((x,y) => x + y) mustBe 15
-    foldRight(List(1,1,1,1,1,1), Nil: List[Int])((x,y) => Cons(x+1, y)) mustBe List(2, 2, 2, 2, 2, 2)
-    foldRight(List(1, 2, 3, 4, 5, 6, 7, 8, 9), 1)((x,y) => x * y) mustBe factorial(9)
+    foldRight(List(1,2,3,4,5), 0)((x, y) => x + y) mustBe 15
+    foldRight(List(1,1,1,1,1,1), Nil: List[Int])((x, y) => Cons(x+1, y)) mustBe List(2, 2, 2, 2, 2, 2)
+    foldRight(List(1, 2, 3, 4, 5, 6, 7, 8, 9), 1)((x, y) => x * y) mustBe factorial(9)
     foldRight(List(1, 2, 3), Nil: List[Int])(Cons(_, _)) mustBe List(1,2,3)
-    foldRight(List("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n"), "")((x,y) => x + y) mustBe "abcdefghijklmn"
+    foldRight(List("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n"), "")((x, y) => x + y) mustBe "abcdefghijklmn"
+  }
+
+  "foldLeft" must "work correctly" in {
+    foldLeft(List(1,2,3,4,5), 0)((x, y) => x + y) mustBe 15
+  }
+
+  "foldRightViafoldLeft" must "work correctly" in {
+    foldRightViaFoldLeft(List(1,2,3,4,5), 0)(_ + _) mustBe 15
+  }
+
+  "foldLeftViafoldRight" must "work correctly" in {
+    foldLeftViaFoldRight(List(1,2,3,4,5), 0)(_ + _) mustBe 15
+  }
+
+  "appendleft" must "work correctlt" in {
+    appendLeft(List(1,2,3))(List(4,5,6)) mustBe List(1,2,3,4,5,6)
+    appendLeft(List(1,1,1,1,1))(Nil) mustBe List(1,1,1,1,1)
+    appendLeft(List("h", "e", "l", "l", "o"))(List("w", "o", "r", "l", "d", "!")) mustBe List("h", "e", "l", "l", "o", "w", "o", "r", "l", "d", "!")
+    appendLeft(Nil)(List(7,3,45,5,6,3)) mustBe List(7,3,45,5,6,3)
+    appendLeft(Nil)(Nil) mustBe Nil
   }
 
   "length" must "work correctly" in {
@@ -138,11 +160,11 @@ class Chapter3Test extends AnyFlatSpec with Matchers {
   }
 
   "zipWith" must "work correctly" in {
-    zipWith(List(1,2,3), List(4,5,6))((x,y) => x + y) mustBe List(5,7,9)
-    zipWith(List(6,2,4,6), List(2, 4, 7, 8, 9, 3, 3))((x,y) => x * y) mustBe List(12, 8, 28, 48)
-    zipWith(List("a", "b", "c"), List("a", "b", "c"))((x,y) => x + y) mustBe List("aa", "bb", "cc")
-    zipWith(Nil, List(3.0, 4.5, 7.7, 7.8))((x,y) => x.max(y)) mustBe Nil
-    zipWith(List(1,5,52,3,47,32,6,54,5,3,2,6), List(7,1,50, 4, 48, 16, 4, 55, 4, 4,9, 0))((x,y) => x.max(y)) mustBe List(7,5,52,4,48,32,6,55,5,4,9,6)
+    zipWith(List(1,2,3), List(4,5,6))((x, y) => x + y) mustBe List(5,7,9)
+    zipWith(List(6,2,4,6), List(2, 4, 7, 8, 9, 3, 3))((x, y) => x * y) mustBe List(12, 8, 28, 48)
+    zipWith(List("a", "b", "c"), List("a", "b", "c"))((x, y) => x + y) mustBe List("aa", "bb", "cc")
+    zipWith(Nil, List(3.0, 4.5, 7.7, 7.8))((x, y) => x.max(y)) mustBe Nil
+    zipWith(List(1,5,52,3,47,32,6,54,5,3,2,6), List(7,1,50, 4, 48, 16, 4, 55, 4, 4,9, 0))((x, y) => x.max(y)) mustBe List(7,5,52,4,48,32,6,55,5,4,9,6)
   }
 
   "has subsequence" must "work correctly" in {

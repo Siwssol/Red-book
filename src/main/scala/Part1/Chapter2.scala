@@ -1,3 +1,5 @@
+package Part1
+
 object Chapter2 {
   def fibonacci(n: Int) : Int = {
     @annotation.tailrec

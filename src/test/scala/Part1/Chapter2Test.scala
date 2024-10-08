@@ -1,9 +1,8 @@
-import Chapter2.{curry, factorial, fibonacci, isSorted, uncurry, compose, genList}
-import List.reverse
-import org.scalatest.matchers.must.Matchers
+package Part1
+
+import Part1.Chapter2._
 import org.scalatest.flatspec.AnyFlatSpec
-
-
+import org.scalatest.matchers.must.Matchers
 
 class Chapter2Test extends AnyFlatSpec with Matchers {
 
@@ -90,10 +89,6 @@ class Chapter2Test extends AnyFlatSpec with Matchers {
     squaredHello(4) mustBe "hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello "
     squaredHello(2) mustBe "hello hello hello hello "
   }
-
-
-
-
 
 
 }

@@ -1,3 +1,5 @@
+package Part1
+
 /*
  As throwing exceptions is a side effect, we don't really use them with functional programming, however there are still ways to represent failures and exceptions functionally.
  By using higher order functions, we can retain the referential transparency and still preserve the benefit of exceptions. We can show that using exceptions break referential transparency.
@@ -240,9 +242,9 @@ object Chapter4 {
 
    */
 
-  def sequence[A](a: List[Option[A]]): Option[List[A]] = {
+  def sequence[A](a: Part1.List[Option[A]]): Option[Part1.List[A]] = {
     a match {
-      case Nil => Some(Nil)
+      case Part1.Nil => Some(Part1.Nil)
       case Cons(h, t) => h match {
         case None => None
         case Some(getHead) => sequence(t) match {
@@ -253,13 +255,13 @@ object Chapter4 {
     }
   }
 
-  def sequenceTraverse[A](a: List[Option[A]]): Option[List[A]] ={
+  def sequenceTraverse[A](a: Part1.List[Option[A]]): Option[Part1.List[A]] ={
     traverse(a)(x => x)
   }
 
-  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = {
+  def traverse[A, B](a: Part1.List[A])(f: A => Option[B]): Option[Part1.List[B]] = {
     a match {
-      case Nil => Some(Nil)
+      case Part1.Nil => Some(Part1.Nil)
       case Cons(h, t) => f(h) match {
         case None => None
         case Some(getHead) => traverse(t)(f) match {
@@ -280,9 +282,9 @@ object Chapter4 {
     catch { case e: Exception => Left(e) }
   }
 
-  def sequenceEither[E, A](es: List[Either[E,A]]): Either[E, List[A]] = {
+  def sequenceEither[E, A](es: Part1.List[Either[E,A]]): Either[E, Part1.List[A]] = {
     es match {
-      case Nil => Right(Nil)
+      case Part1.Nil => Right(Part1.Nil)
       case Cons(x, xs) => x match {
         case Left(value) => Left(value)
         case Right(getHead) => sequenceEither(xs) match {
@@ -293,9 +295,9 @@ object Chapter4 {
     }
   }
 
-  def traverseEither[E, A, B](as: List[A])(f: A => Either[E, B]): Either[E, List[B]] = {
+  def traverseEither[E, A, B](as: Part1.List[A])(f: A => Either[E, B]): Either[E, Part1.List[B]] = {
     as match {
-      case Nil => Right(Nil)
+      case Part1.Nil => Right(Part1.Nil)
       case Cons(x, xs) => f(x) match {
         case Left(e) => Left(e)
         case Right(getHead) => traverseEither(xs)(f) match {
@@ -319,7 +321,7 @@ object Chapter4 {
   }
 
   def main(args: Array[String]) : Unit = {
-    val x: List[Int] = List(1,4,5,1,2,3,4,5)
+    val x: Part1.List[Int] = Part1.List(1,4,5,1,2,3,4,5)
     println(traverseEither(x)(a => if (a%2 == 0) Left(a) else Right(a)))
   }
 
