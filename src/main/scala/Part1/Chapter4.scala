@@ -242,9 +242,9 @@ object Chapter4 {
 
    */
 
-  def sequence[A](a: Part1.List[Option[A]]): Option[Part1.List[A]] = {
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = {
     a match {
-      case Part1.Nil => Some(Part1.Nil)
+      case Nil => Some(Nil)
       case Cons(h, t) => h match {
         case None => None
         case Some(getHead) => sequence(t) match {
@@ -255,13 +255,13 @@ object Chapter4 {
     }
   }
 
-  def sequenceTraverse[A](a: Part1.List[Option[A]]): Option[Part1.List[A]] ={
+  def sequenceTraverse[A](a: List[Option[A]]): Option[List[A]] ={
     traverse(a)(x => x)
   }
 
-  def traverse[A, B](a: Part1.List[A])(f: A => Option[B]): Option[Part1.List[B]] = {
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = {
     a match {
-      case Part1.Nil => Some(Part1.Nil)
+      case Nil => Some(Nil)
       case Cons(h, t) => f(h) match {
         case None => None
         case Some(getHead) => traverse(t)(f) match {
@@ -282,9 +282,9 @@ object Chapter4 {
     catch { case e: Exception => Left(e) }
   }
 
-  def sequenceEither[E, A](es: Part1.List[Either[E,A]]): Either[E, Part1.List[A]] = {
+  def sequenceEither[E, A](es: List[Either[E,A]]): Either[E, List[A]] = {
     es match {
-      case Part1.Nil => Right(Part1.Nil)
+      case Nil => Right(Nil)
       case Cons(x, xs) => x match {
         case Left(value) => Left(value)
         case Right(getHead) => sequenceEither(xs) match {
@@ -295,9 +295,9 @@ object Chapter4 {
     }
   }
 
-  def traverseEither[E, A, B](as: Part1.List[A])(f: A => Either[E, B]): Either[E, Part1.List[B]] = {
+  def traverseEither[E, A, B](as: List[A])(f: A => Either[E, B]): Either[E, List[B]] = {
     as match {
-      case Part1.Nil => Right(Part1.Nil)
+      case Nil => Right(Nil)
       case Cons(x, xs) => f(x) match {
         case Left(e) => Left(e)
         case Right(getHead) => traverseEither(xs)(f) match {
@@ -321,7 +321,7 @@ object Chapter4 {
   }
 
   def main(args: Array[String]) : Unit = {
-    val x: Part1.List[Int] = Part1.List(1,4,5,1,2,3,4,5)
+    val x: List[Int] = List(1,4,5,1,2,3,4,5)
     println(traverseEither(x)(a => if (a%2 == 0) Left(a) else Right(a)))
   }
 

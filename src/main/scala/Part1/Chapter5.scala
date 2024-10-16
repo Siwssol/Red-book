@@ -1,6 +1,6 @@
 package Part1
 
-import Part1.Stream.{consStream, unfold}
+import Stream.{consStream, unfold}
 
 /*
 The issue with the map and filter functions, or rather the List data structure is that for each application of the functions, we have to go through a list.
@@ -72,14 +72,14 @@ sealed trait Stream[+A] {
   /*
   We have to force h explicitly via h()
    */
-  def headOption: Part1.Option[A] = this match {
-    case Empty => Part1.None
-    case ConsStream(h, t) => Part1.Some(h())
+  def headOption: Option[A] = this match {
+    case Empty => None
+    case ConsStream(h, t) => Some(h())
   }
 
-  def toList: Part1.List[A] = {
+  def toList: List[A] = {
     this match {
-      case Empty => Part1.Nil
+      case Empty => Nil
       case ConsStream(h, t) => Cons(h(), t().toList)
     }
   }
@@ -88,19 +88,23 @@ sealed trait Stream[+A] {
     this match {
       case Empty => Empty
       case ConsStream(h, t) =>
-        if (n == 1) Stream(h())
+        if (n <= 0) Stream()
+        else if (n == 1) Stream(h())
         else ConsStream(h, () => t().take(n-1))
     }
   }
 
   def takeFold(n: Int): Stream[A] = {
-    unfold((this, n))({case (ConsStream(a,b), n) => if (n > 0) Part1.Some(a(), (b(), n-1)) else Part1.None })
+    unfold((this, n))({
+      case (ConsStream(a,b), n) => if (n > 0) Some(a(), (b(), n-1)) else None
+      case _ => None})
   }
 
   def drop(n: Int): Stream[A] = {
     this match {
       case Empty => Empty
       case ConsStream(h, t) =>
+        if (n <= 0) return this
         if (n == 1) t()
         else t().drop(n-1)
     }
@@ -157,6 +161,9 @@ sealed trait Stream[+A] {
       (ff, consStream(ff, intermediate._2))
     })._2
 
+  def tailsScan: Stream[Stream[A]] = {
+    scanRight(Empty: Stream[A])((x, y) => consStream(x, y))
+  }
 
   /*
   Here b represents the recursive step that folds the tail of the stream. If p(a) returns true then b is never evaluated and the computation terminates early.
@@ -174,11 +181,13 @@ sealed trait Stream[+A] {
   }
 
   def takeWhileFold(p: A => Boolean): Stream[A] = {
-    unfold(this)({case ConsStream(a,b) => if (p(a())) Part1.Some(a(), b()) else Part1.None })
+    unfold(this)({
+      case ConsStream(a,b) => if (p(a())) Some(a(), b()) else None
+      case _ => None})
   }
 
-  def headOptionRight: Part1.Option[A] =
-    foldRight(Part1.None: Part1.Option[A])((a, b) => Part1.Some(a))
+  def headOptionRight: Option[A] =
+    foldRight(None: Option[A])((a, b) => Some(a))
 
   def map[B](f: A => B): Stream[B] =
     foldRight(Empty: Stream[B])((a,b) => ConsStream(() => f(a), () => b))
@@ -195,32 +204,35 @@ sealed trait Stream[+A] {
     foldRight(Empty: Stream[B])((a,b) => f(a).append(b))
 
   def mapFold[B](f: A => B): Stream[B] =
-    unfold(this: Stream[A]){case ConsStream(a,b) => Part1.Some(f(a()), b())}
+    unfold(this: Stream[A]) {
+        case ConsStream(a, b) => Some(f(a()), b())
+        case Empty => None
+    }
 
   def zipWith[A1 >: A, B](st: Stream[A1])(f: (A1,A1) => B) : Stream[B] =
     unfold((this: Stream[A1], st)){
-      case (Empty, Empty) => Part1.None
+      case (Empty, Empty) => None
       case (ConsStream(a, b), ConsStream(aa, bb)) =>
-        Part1.Some(f(a(), aa()), (b(), bb()))}
+        Some(f(a(), aa()), (b(), bb()))}
 
   /*
   Like zipWith but it's extended to handle unmatching sized Streams. It continues the traversal so long as either Stream has more elements.
   It generates a tuple of each corresponding element. If either stream has finished traversal but it can keep traversing, the values are filled with None.
    */
-  def zipAll[B](s2: Stream[B]): Stream[(Part1.Option[A], Part1.Option[B])] =
+  def zipAll[B](s2: Stream[B]): Stream[(Option[A], Option[B])] =
     unfold((this: Stream[A], s2)) {
-      case (Empty, Empty) => Part1.None
-      case (Empty, ConsStream(a,b)) => Part1.Some((Part1.None, Part1.Some(a())), (Empty, b()))
-      case (ConsStream(a,b), Empty) => Part1.Some((Part1.Some(a()), Part1.None), (b(), Empty))
+      case (Empty, Empty) => None
+      case (Empty, ConsStream(a,b)) => Some((None, Some(a())), (Empty, b()))
+      case (ConsStream(a,b), Empty) => Some((Some(a()), None), (b(), Empty))
       case (ConsStream(a, b), ConsStream(aa, bb)) =>
-        Part1.Some((Part1.Some(a()), Part1.Some(aa())),(b(), bb()))
+        Some((Some(a()), Some(aa())),(b(), bb()))
     }
 
 
   /*
   Even though filter transforms the whole stream, it does it lazily so it will terminate as soon as a match is found
    */
-  def find(p: A => Boolean): Part1.Option[A] =
+  def find(p: A => Boolean): Option[A] =
     filter(p).headOption
 
   /*
@@ -228,7 +240,7 @@ sealed trait Stream[+A] {
   e.g Stream(1,2,3) startsWith Stream(1,2) would be true
    */
   def startsWith[A1 >: A](s: Stream[A1]): Boolean =
-    this.zipAll(s).takeWhile(x => x._2.getOrElse(Part1.None) != Part1.None).forAll(x => x._1 == x._2)
+    this.zipAll(s).takeWhile(x => x._2.getOrElse(None) != None).forAll(x => x._1 == x._2)
 
   /*
   Generates a Stream of suffixes of the input stream
@@ -236,11 +248,11 @@ sealed trait Stream[+A] {
    */
   def tails: Stream[Stream[A]] =
     unfold(this){
-      case Empty => Part1.None
+      case Empty => None
       case x => x match {
-        case ConsStream(a,b) => Part1.Some(unfold(x){
-          case Empty => Part1.None
-          case ConsStream(aa, bb) => Part1.Some(aa(), bb())
+        case ConsStream(a,b) => Some(unfold(x){
+          case Empty => None
+          case ConsStream(aa, bb) => Some(aa(), bb())
         },b())
       }
     }
@@ -248,8 +260,9 @@ sealed trait Stream[+A] {
   /*
   Now the hasSubsequence function can be implemented using functions that have been written. By using laziness we can compose the function from simpler components and still retain the efficiency
    */
-  def hasSubsequence[A](s: Stream[A]): Boolean =
+  def hasSubsequence[A1](s: Stream[A1]): Boolean = {
     tails exists (_ startsWith s)
+  }
 }
 case object Empty extends Stream[Nothing]
 /*
@@ -272,6 +285,8 @@ object Stream {
     lazy val tail = tl
     ConsStream(() => head, () => tail)
   }
+
+  def ones: Stream[Int] = consStream(1, ones)
 
   def constant[A](a: A): Stream[A] =
     consStream(a, constant(a))
@@ -297,7 +312,15 @@ object Stream {
     fibsGo(0,1)
   }
 
-  def unfold[A,S](z: S)(f: S => Part1.Option[(A,S)]): Stream[A] = {
+  /*
+  A general stream-building function. It's sometimes called a corecursive function. While recursive functions consumes data and terminates by recursing on smaller inputs, a corecursive function produces data and need not terminate so long as they remain productive, which just means that we can always evaluate more of the result in a finite number of time
+  Corecursion:
+    Starts from the base case and computes steps by using the output of one step as the input of the next one.
+  Recursion:
+    Same operation however it starts with the last step. You delay evaluation until you encounter a base condition.
+
+   */
+  def unfold[A,S](z: S)(f: S => Option[(A,S)]): Stream[A] = {
     f(z) match {
       case Some((a,s)) => consStream(a, unfold(s)(f))
       case _ => Empty
